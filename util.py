@@ -13,61 +13,33 @@ def prepare_tickers_suffix(tickers: list[str]) -> list[str]:
 __indonesia_suffix = '.JK'
 
 
-def __get_closed_price_for_market_value(ticker: str, start_time: datetime, end_time: datetime) -> float:
-    the_ticker = yf.Ticker(ticker)
-    return the_ticker.history(start=start_time, end=end_time, raise_errors=True).iloc[0]['Close']
-
-
-def __get_number_of_share_for_market_value(ticker: str, start_time: datetime, end_time: datetime) -> int:
-    the_ticker = yf.Ticker(ticker)
-
-    gathered_share = the_ticker.get_shares_full(start=start_time, end=end_time)
-    number_of_share = 0
-    if gathered_share is not None:
-        if not gathered_share.empty:
-            number_of_share = gathered_share[0]
-
-    return number_of_share
-
-
 def get_market_capital(ticker: str, date: str) -> float:
     start_time = datetime.strptime(date, '%Y-%m-%d')
     end_time = start_time + timedelta(days=1)
 
-    pool = ThreadPool(processes=2)
-
-    async_closed_price = pool.apply_async(
-        __get_closed_price_for_market_value, (ticker, start_time, end_time))
-    async_number_of_share = pool.apply_async(
-        __get_number_of_share_for_market_value, (ticker, start_time, end_time))
-
-    closed_price = async_closed_price.get()
-    number_of_share = async_number_of_share.get()
-
-    del pool
+    the_ticker = yf.Ticker(ticker)
+    closed_price = the_ticker.history(
+        start=start_time, end=end_time, raise_errors=True).iloc[0]['Close']
+    number_of_share = 0
+    gathered_share = the_ticker.get_shares_full(start=start_time, end=end_time)
+    if gathered_share is not None:
+        if not gathered_share.empty:
+            number_of_share = gathered_share[0]
 
     return closed_price * number_of_share
 
 
-def prepare_top_10_tickers_per_sector(date: str) -> pd.DataFrame:
+def prepare_tickers_per_sector(date: str) -> pd.DataFrame:
     gathered_market_values: list[dict] = []
     for sector in data_source.tickers.keys():
         gathered_market_values_per_sector: list[dict] = []
         for sector_member in data_source.tickers[sector]:
-            try:
-                market_value = get_market_capital(
-                    f'{sector_member}{__indonesia_suffix}', date)
-            except Exception:
-                continue
             gathered_market_values_per_sector.append({
                 'sector': sector,
-                'ticker': sector_member,
-                'market_value': market_value
+                'ticker': sector_member
             })
         dataframe_per_sector = pd.DataFrame(gathered_market_values_per_sector)
-        dataframe_per_sector = dataframe_per_sector.sort_values(
-            'market_value', ascending=False)
-        dataframe_per_sector = dataframe_per_sector.iloc[0:10]
+        dataframe_per_sector = dataframe_per_sector.sort_values(by='sector')
         gathered_market_values.extend(dataframe_per_sector.to_dict('records'))
     return pd.DataFrame(gathered_market_values)
 
@@ -88,7 +60,7 @@ def generate_average_return_per_sector(data: pd.DataFrame, start_date: str, end_
         tickers_sectorized = prepare_tickers_suffix(tickers=tickers_sectorized)
         prices_per_sector = yf.download(
             tickers=tickers_sectorized, start=start_time, end=end_time)
-        prices_per_sector_close = prices_per_sector['Close']
+        prices_per_sector_close = prices_per_sector['Close'].dropna(axis=1)
         return_of_tickers = prices_per_sector_close.pct_change(
             fill_method='pad')
         return_of_tickers = return_of_tickers.iloc[1:]
