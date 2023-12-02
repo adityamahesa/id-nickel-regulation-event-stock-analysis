@@ -1,0 +1,25 @@
+
+Call:
+lm(formula = formula_without_dummy, data = data_winner_for_model2)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.25313 -0.01635 -0.00115  0.01268  0.35799 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      0.0060287  0.0091961   0.656 0.512126    
+U_0              0.0141597  0.0095321   1.485 0.137464    
+LEAK             0.0109727  0.0055304   1.984 0.047289 *  
+VLM_transformed  0.0004324  0.0001221   3.540 0.000402 ***
+MV_transformed  -0.0004314  0.0003249  -1.328 0.184353    
+RET             -0.0499468  0.0480335  -1.040 0.298455    
+VLT             -0.1079862  0.1377915  -0.784 0.433248    
+COR              0.0004339  0.0023820   0.182 0.855450    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.04449 on 6792 degrees of freedom
+Multiple R-squared:  0.003114,	Adjusted R-squared:  0.002086 
+F-statistic:  3.03 on 7 and 6792 DF,  p-value: 0.003502
+
